@@ -28,7 +28,10 @@ namespace GridSystem.UI
         private Image img;
         public ITile.State state { get; set; }
 
-        [SerializeField] private Color DefaultColor, SelectableColor, ValidColor, InvalidColor;
+        [SerializeField] private Color DefaultColor = Color.white;
+        [SerializeField] private Color SelectableColor= Color.gray;
+        [SerializeField] private Color ValidColor = Color.green;
+        [SerializeField] private Color InvalidColor = Color.red;
         public Color defaultColor => DefaultColor;
 
         public Color selectableColor => SelectableColor;

@@ -5,6 +5,7 @@ using UnityEngine.UI;
 
 namespace GridSystem.UI
 {
+    [RequireComponent(typeof(GridLayoutGroup))]
     public class GridManager : MonoBehaviour, IGrid
     {
         [SerializeField] int width, height;
@@ -21,8 +22,8 @@ namespace GridSystem.UI
             private set { height = value; }
         }
 
-        [SerializeField] Tile gridTile;
-        GridLayoutGroup grid;
+        [SerializeField] private Tile gridTile;
+        private GridLayoutGroup grid;
         public List<ITile> tiles { get; set; } = new();
         public ITile hoveredTile { get; set; }
         public bool currentlySelecting { get; set; }
@@ -44,16 +45,12 @@ namespace GridSystem.UI
             }
 
             grid = GetComponent<GridLayoutGroup>();
+            grid.constraint = GridLayoutGroup.Constraint.FixedColumnCount;
             SetUpGrid();
         }
 
         public void SetUpGrid()
         {
-            //make it stay in center
-            //int paddingX = Mathf.FloorToInt(((grid.cellSize.x + grid.spacing.x) * width / 2) - (grid.cellSize.x + grid.spacing.x) / 2);
-            //int paddingY = Mathf.FloorToInt(((grid.cellSize.x + grid.spacing.x) * height / 2) - (grid.cellSize.x + grid.spacing.x) / 2);
-            //grid.padding = new RectOffset(-paddingX, 0, -paddingY, 0);
-
             IGrid _grid = this;
             grid.constraintCount = height;
             tiles.Clear();

@@ -8,11 +8,14 @@ namespace GridSystem.VisualElements
     public class GridManager : MonoBehaviour, IGrid
     {
         [SerializeField] private UIDocument document;
-        [Space] [SerializeField] private int cellSize = 50;
+        [SerializeField] private Color backgroundColor = ColorExtensions.GrayShade(.3f);
+        [Space] 
+        [SerializeField] private int cellSize = 50;
         [SerializeField] private int spacing = 5;
         [SerializeField] private int padding = 10;
-        [Space] [SerializeField] int width;
-        [SerializeField] int height;
+        [Space] 
+        [SerializeField] private int width;
+        [SerializeField] private int height;
 
         public int Width
         {
@@ -60,11 +63,10 @@ namespace GridSystem.VisualElements
 
             IGrid _grid = this;
             grid = new();
-            grid.style.backgroundColor = ColorExtensions.GrayShade(.3f);
+            grid.style.backgroundColor = backgroundColor;
             grid.style.width = (cellSize * Width) + padding * 2 + (spacing * (Width - 1));
             grid.style.height = (cellSize * Height) + padding * 2 + (spacing * (Height - 1));
             grid.SetMargin(padding);
-            //grid.style.marginLeft = (screenSize.x - grid.style.width.value.value) / 2f;
             grid.style.paddingLeft = padding / 2f;
             grid.style.paddingTop = padding / 2f;
             grid.style.flexDirection = FlexDirection.Row;
@@ -74,7 +76,7 @@ namespace GridSystem.VisualElements
 
             for (int i = 0; i < count; i++)
             {
-                Tile cell = new Tile();
+                Tile cell = new ();
                 cell.name = $"Tile [{i % width},{i / width}]";
                 cell.style.width = cellSize;
                 cell.style.height = cellSize;

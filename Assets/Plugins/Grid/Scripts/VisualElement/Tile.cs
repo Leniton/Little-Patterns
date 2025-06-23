@@ -9,6 +9,21 @@ namespace GridSystem.VisualElements
     {
         public List<IPiece> pieces { get; set; } = new();
 
+        public int pieceID
+        {
+            get
+            {
+                if (pieces.Count <= 0) return (int)PieceType.none;
+                int value = (int)PieceType.generic;
+                for (int i = 0; i < pieces.Count; i++)
+                {
+                    value |= pieces[i].id;
+                }
+
+                return value;
+            }
+        }
+
         public Color defaultColor { get; } = ColorExtensions.GrayShade(.8f);
 
         public Color selectableColor { get; } = ColorExtensions.GrayShade(.4f);
@@ -61,6 +76,12 @@ namespace GridSystem.VisualElements
 
             for (int i = 0; i < pieces.Count; i++) pieces[i].onExit?.Invoke();
             onExit?.Invoke(this);
+        }
+
+        public void PlacePiece(IPiece piece)
+        {
+            if (pieces.Contains(piece)) return;
+            pieces.Add(piece);
         }
     }
 }

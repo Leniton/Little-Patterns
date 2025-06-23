@@ -11,52 +11,49 @@ namespace GridSystem
         public int id { get; set; }
         public Coordinate coordinate { get; set; }
         public Action onClick { get; set; }
-        public List<Characteristic> characteristics { get; set; }
+        public List<Characteristic> pieceCharacteristics { get; set; }
 
-        public void Initialize()
+        public void Initialize(int pieceId = 1, params Characteristic[] characteristics)
         {
-            id = (int)PieceType.generic;
-            for (int i = 0; i < characteristics.Count; i++)
+            pieceCharacteristics.Clear();
+            for (int i = 0; i < characteristics.Length; i++)
             {
-                id = characteristics[i].ModifyID(id);
-                characteristics[i].SetUp(this);
+                Characteristic characteristic = characteristics[i];
+                pieceCharacteristics.Add(characteristic);
+                characteristic.ModifyID(ref pieceId);
+                characteristic.SetUp(this);
             }
+            id = pieceId;
         }
 
-        public void StylePiece(Sprite sprite, Color color);
-
-        public void SetCurrentTile(ITile previousTile, ITile newTile, Coordinate newCoordinates);
+        public void PositionPiece(Vector3 position);
 
         public bool AddCharacteristic<T>(T characteristic) where T : Characteristic
         {
-            for (int i = 0; i < characteristics.Count; i++)
+            //check if characteristic (or one that inherits it) exists
+            for (int i = 0; i < pieceCharacteristics.Count; i++)
             {
-                if (characteristics[i].GetType().IsAssignableFrom(typeof(T)) ||
-                    characteristics[i].GetType().IsSubclassOf(typeof(T)))
-                {
-                    Debug.LogWarning($"Characteristic {characteristics[i].GetType().Name} already exists!");
-                    return false;
-                }
+                if (pieceCharacteristics[i] is not T) continue;
+                Debug.LogWarning($"Characteristic {pieceCharacteristics[i].GetType().Name} already exists!");
+                return false;
             }
 
             //Debug.Log($"adding {characteristic.GetType().Name}");
-            characteristics.Add(characteristic);
+
+            int modifiedId = id;
+            characteristic.ModifyID(ref modifiedId);
+            id = modifiedId;
+            pieceCharacteristics.Add(characteristic);
             return true;
         }
 
         public T GetCharacteristic<T>() where T : Characteristic
         {
             T returnValue = null;
-            for (int i = 0; i < characteristics.Count; i++)
+            for (int i = 0; i < pieceCharacteristics.Count; i++)
             {
-                try
-                {
-                    returnValue = (T)characteristics[i];
-                    break;
-                }
-                catch
-                {
-                }
+                if (pieceCharacteristics[i] is not T) continue;
+                returnValue = (T)pieceCharacteristics[i];
             }
 
             return returnValue;
@@ -65,11 +62,10 @@ namespace GridSystem
         public string CharacteristicsInfo()
         {
             StringBuilder value = new();
-
-            for (int i = 0; i < characteristics.Count; i++)
+            for (int i = 0; i < pieceCharacteristics.Count; i++)
             {
-                value.Append(characteristics[i]);
-                if (i < characteristics.Count - 1) value.Append('\n');
+                value.Append(pieceCharacteristics[i]);
+                if (i < pieceCharacteristics.Count - 1) value.Append('\n');
             }
 
             return value.ToString();
@@ -77,11 +73,11 @@ namespace GridSystem
 
         public string ToString()
         {
-            string value = Name;
-            value += $"({coordinate.x},{coordinate.y})";
-            value += CharacteristicsInfo();
+            StringBuilder value = new(Name);
+            value.Append($"({coordinate.x},{coordinate.y})");
+            value.Append(CharacteristicsInfo());
 
-            return value;
+            return value.ToString();
         }
     }
 }

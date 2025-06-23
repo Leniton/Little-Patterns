@@ -11,7 +11,8 @@ namespace GridSystem
         public int Width { get; }
         public int Height { get; }
 
-        public List<ITile> tiles { get; set; }
+        public int gridSize => Width * Height;
+
         public ITile hoveredTile { get; set; }
         public bool currentlySelecting { get; set; }
 
@@ -21,7 +22,8 @@ namespace GridSystem
 
         public void SetUpGrid();
 
-        public int GetTileIndex(ITile tile) => tiles.IndexOf(tile);
+        public int GetTileIndex(ITile tile);
+        public ITile GetTileAtIndex(int index);
 
         public Coordinate GetTileCoordinates(ITile tile)
         {
@@ -33,13 +35,20 @@ namespace GridSystem
             return new Coordinate(x, y);
         }
 
-        public ITile GetTileAt(Coordinate coordinates) =>
-            (coordinates.x < 0 || coordinates.y < 0 || coordinates.x >= Width || coordinates.y >= Height)
-                ? null
-                : tiles[(Width * coordinates.y) + coordinates.x];
+        public bool GetTileAt(Coordinate coordinates, out ITile tile)
+        {
+            tile = (coordinates.x < 0 || coordinates.y < 0 || coordinates.x >= Width || coordinates.y >= Height) ? 
+                null : GetTileAtIndex((Width * coordinates.y) + coordinates.x);
+            return tile != null;
+        }
 
-        public void WarpToSpot(IPiece piece, Coordinate coordinates) =>
-            piece.SetCurrentTile(GetTileAt(piece.coordinate), GetTileAt(coordinates), coordinates);
+        public void WarpToSpot(IPiece piece, Coordinate coordinates)
+        {
+            if (!GetTileAt(coordinates, out var newTile)) return;
+            if (GetTileAt(coordinates, out var currentTile)) currentTile.RemovePiece(piece);
+            piece.coordinate = coordinates;
+            newTile.PlacePiece(piece);
+        }
 
         public void ChooseTileInRange(Coordinate origin, Area area, Area selectArea,
             Action<Coordinate, Coordinate, Area> onSelectTile,
@@ -52,8 +61,7 @@ namespace GridSystem
             {
                 Coordinate currentCoordinate = coordinates[i];
                 //Debug.Log($"{currentCoordinate.x} | {currentCoordinate.y}");
-                ITile tile = GetTileAt(currentCoordinate);
-                if (tile != null)
+                if (GetTileAt(currentCoordinate, out var tile))
                 {
                     tile.onEnter += (value) => SelectArea(currentCoordinate, selectArea, selectFilter);
                     tile.onExit += (value) => UnSelectArea(currentCoordinate, selectArea, selectFilter);
@@ -61,12 +69,12 @@ namespace GridSystem
                         ClickArea(onSelectTile, origin, currentCoordinate, selectArea, selectFilter);
                     if (IsInFilter(tile.pieceID, filter))
                     {
-                        tile.state = (ITile.State.selectable);
+                        tile.state = (ITile.State.Selectable);
                         tile.AddColor(tile.selectableColor);
                     }
                     else
                     {
-                        tile.state = (ITile.State.invalid);
+                        tile.state = (ITile.State.Invalid);
                         tile.AddColor(tile.invalidColor);
                     }
                 }
@@ -79,14 +87,12 @@ namespace GridSystem
 
         public void SelectArea(Coordinate origin, Area area, int filter = -1)
         {
-            //return;
             if (!currentlySelecting) return;
 
             List<Coordinate> coordinates = area.GetCoordinates(origin, Width, Height);
             for (int i = 0; i < coordinates.Count; i++)
             {
-                ITile currentTile = GetTileAt(coordinates[i]);
-                if (currentTile != null)
+                if (GetTileAt(coordinates[i], out var currentTile))
                 {
                     currentTile.AddColor(IsInFilter(currentTile.pieceID, filter)
                         ? currentTile.validColor
@@ -103,12 +109,11 @@ namespace GridSystem
             List<Coordinate> coordinates = area.GetCoordinates(origin, Width, Height);
             for (int i = 0; i < coordinates.Count; i++)
             {
-                ITile currentTile = GetTileAt(coordinates[i]);
                 Color color = Color.white;
-                if (currentTile != null)
+                if (GetTileAt(coordinates[i], out var currentTile))
                 {
                     color = IsInFilter(currentTile.pieceID, filter) ? currentTile.validColor : currentTile.invalidColor;
-                    if (currentTile.state == ITile.State.generic) currentTile.SetColor(currentTile.defaultColor);
+                    if (currentTile.state == ITile.State.Generic) currentTile.SetColor(currentTile.defaultColor);
                     currentTile.RemoveColor(color);
                 }
             }
@@ -123,9 +128,9 @@ namespace GridSystem
             List<Coordinate> coordinates = area.GetCoordinates(point, Width, Height);
             for (int i = 0; i < coordinates.Count; i++)
             {
-                ITile currentTile = GetTileAt(coordinates[i]);
                 Color color = Color.white;
-                if (currentTile != null && IsInFilter(currentTile.pieceID, filter))
+                if (GetTileAt(coordinates[i], out var currentTile) && 
+                    IsInFilter(currentTile.pieceID, filter))
                 {
                     clickAction?.Invoke(origin, point, area);
                     return;
@@ -135,22 +140,20 @@ namespace GridSystem
 
         public void StopSelecting()
         {
-            for (int i = 0; i < tiles.Count; i++)
+            for (int i = 0; i < gridSize; i++)
             {
-                tiles[i].state = ITile.State.generic;
-                tiles[i].SetColor(tiles[i].defaultColor);
-                tiles[i].onClick = OnClick;
-                tiles[i].onEnter = OnEnter;
-                tiles[i].onExit = OnExit;
+                ITile tile = GetTileAtIndex(i);
+                tile.state = ITile.State.Generic;
+                tile.SetColor(tile.defaultColor);
+                tile.onClick = OnClick;
+                tile.onEnter = OnEnter;
+                tile.onExit = OnExit;
             }
 
             currentlySelecting = false;
         }
 
-        public void OnClick(ITile tile)
-        {
-            onClick?.Invoke(tile);
-        }
+        public void OnClick(ITile tile) => onClick?.Invoke(tile);
 
         public void OnEnter(ITile tile)
         {

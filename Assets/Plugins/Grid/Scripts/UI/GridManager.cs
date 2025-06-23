@@ -24,7 +24,7 @@ namespace GridSystem.UI
 
         [SerializeField] private Tile gridTile;
         private GridLayoutGroup grid;
-        public List<ITile> tiles { get; set; } = new();
+        public List<Tile> tiles = new();
         public ITile hoveredTile { get; set; }
         public bool currentlySelecting { get; set; }
 
@@ -34,16 +34,6 @@ namespace GridSystem.UI
 
         private void Awake()
         {
-            if (IGrid.Instance != this)
-            {
-                if (IGrid.Instance == null) IGrid.Instance = this;
-                else
-                {
-                    Destroy(gameObject);
-                    return;
-                }
-            }
-
             grid = GetComponent<GridLayoutGroup>();
             grid.constraint = GridLayoutGroup.Constraint.FixedColumnCount;
             SetUpGrid();
@@ -51,7 +41,6 @@ namespace GridSystem.UI
 
         public void SetUpGrid()
         {
-            IGrid _grid = this;
             grid.constraintCount = height;
             tiles.Clear();
             for (int i = 0; i < width * height; i++)
@@ -59,10 +48,14 @@ namespace GridSystem.UI
                 Tile tile = Instantiate(gridTile, transform);
                 tile.name = $"Tile [{i % width},{i / width}]";
                 tiles.Add(tile);
-                tiles[i].onClick = _grid.OnClick;
-                tiles[i].onEnter = _grid.OnEnter;
-                tiles[i].onExit = _grid.OnExit;
+                tiles[i].onClick = onClick;
+                tiles[i].onEnter = onEnter;
+                tiles[i].onExit = onExit;
             }
         }
+
+        public ITile GetTileAtIndex(int index) => tiles[index];
+
+        public int GetTileIndex(ITile tile) => tiles.IndexOf(tile as Tile ?? null);
     }
 }

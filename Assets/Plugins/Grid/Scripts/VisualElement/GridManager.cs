@@ -29,7 +29,7 @@ namespace GridSystem.VisualElements
             private set { height = value; }
         }
 
-        public List<ITile> tiles { get; set; } = new();
+        public List<Tile> tiles = new();
         public ITile hoveredTile { get; set; }
         public bool currentlySelecting { get; set; }
         public Action<ITile> onClick { get; set; }
@@ -93,5 +93,9 @@ namespace GridSystem.VisualElements
 
             document.rootVisualElement.Add(grid);
         }
+
+        public ITile GetTileAtIndex(int index) => tiles[index];
+
+        public int GetTileIndex(ITile tile) => tiles.IndexOf(tile as Tile ?? null);
     }
 }

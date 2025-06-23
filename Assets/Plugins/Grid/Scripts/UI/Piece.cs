@@ -28,7 +28,7 @@ namespace GridSystem.UI
         public Action onEnter { get; set; }
         public Action onExit { get; set; }
         public Action onClick { get; set; }
-        public List<Characteristic> characteristics { get; set; } = new();
+        public List<Characteristic> pieceCharacteristics { get; set; } = new();
 
         public void StylePiece(Sprite sprite, Color color)
         {
@@ -36,17 +36,10 @@ namespace GridSystem.UI
             image.color = color;
         }
 
-        public void SetCurrentTile(ITile previousTile, ITile newTile, Coordinate newCoordinates)
+        public void PositionPiece(Vector3 position)
         {
-            if (newTile is not Tile tile) return;
-            //take him out of previous place
-            if (previousTile != null) previousTile.RemovePiece(this);
             //place him at new space
-            transform.SetParent(tile.transform);
-            transform.localPosition = Vector3.zero;
-            transform.localScale = Vector3.one;
-            coordinate = newCoordinates;
-            newTile.PlacePiece(this);
+            transform.localPosition = position;
         }
     }
 }

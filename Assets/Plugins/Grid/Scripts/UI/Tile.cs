@@ -97,5 +97,12 @@ namespace GridSystem.UI
 
             return false;
         }
+
+        public void PlacePiece(IPiece piece)
+        {
+            if (pieces.Contains(piece)) return;
+            pieces.Add(piece);
+            piece.PositionPiece(transform.localPosition);
+        }
     }
 }

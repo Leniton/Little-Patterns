@@ -14,7 +14,7 @@ namespace GridSystem.VisualElements
         public Action onEnter { get; set; }
         public Action onExit { get; set; }
         public Action onClick { get; set; }
-        public List<Characteristic> characteristics { get; set; } = new();
+        public List<Characteristic> pieceCharacteristics { get; set; } = new();
 
         public Piece()
         {
@@ -29,17 +29,12 @@ namespace GridSystem.VisualElements
             tintColor = color;
         }
 
-        public void SetCurrentTile(ITile previousTile, ITile newTile, Coordinate newCoordinates)
-        {
-            if (newTile is not Tile) return;
-            //take him out of previous place
-            if (previousTile != null) previousTile.RemovePiece(this);
 
-            Tile tile = (Tile)newTile;
-            tile.Add(this);
-            transform.position = Vector3.zero;
-            coordinate = newCoordinates;
-            newTile.PlacePiece(this);
+
+        public void PositionPiece(Vector3 position)
+        {
+            //place him at new space
+            transform.position = position;
         }
     }
 }

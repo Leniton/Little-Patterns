@@ -8,31 +8,20 @@ namespace GridSystem
     {
         public List<IPiece> pieces { get; set; }
 
-        public int pieceID
-        {
-            get
-            {
-                if (pieces.Count <= 0) return (int)PieceType.none;
-                int value = (int)PieceType.generic;
-                for (int i = 0; i < pieces.Count; i++)
-                {
-                    value |= pieces[i].id;
-                }
-
-                return value;
-            }
-        }
+        public int pieceID { get; }
 
         public Color defaultColor { get; }
         public Color selectableColor { get; }
         public Color validColor { get; }
         public Color invalidColor { get; }
 
+        [Flags]
         public enum State
         {
-            generic,
-            selectable,
-            invalid
+            Generic = 1,
+            Selectable = 2,
+            Valid = 4,
+            Invalid = 8
         }
 
         public State state { get; set; }
@@ -44,11 +33,7 @@ namespace GridSystem
         public Action<ITile> onEnter { get; set; }
         public Action<ITile> onExit { get; set; }
 
-        public void PlacePiece(IPiece piece)
-        {
-            if (!pieces.Contains(piece))
-                pieces.Add(piece);
-        }
+        public void PlacePiece(IPiece piece);
 
         public void RemovePiece(IPiece piece) => pieces.Remove(piece);
 

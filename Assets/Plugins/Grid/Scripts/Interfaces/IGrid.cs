@@ -67,16 +67,8 @@ namespace GridSystem
                     tile.onExit += (value) => UnSelectArea(currentCoordinate, selectArea, selectFilter);
                     tile.onClick += (value) =>
                         ClickArea(onSelectTile, origin, currentCoordinate, selectArea, selectFilter);
-                    if (IsInFilter(tile.pieceID, filter))
-                    {
-                        tile.state = (ITile.State.Selectable);
-                        tile.AddColor(tile.selectableColor);
-                    }
-                    else
-                    {
-                        tile.state = (ITile.State.Invalid);
-                        tile.AddColor(tile.invalidColor);
-                    }
+                    tile.RemoveState(IsInFilter(tile.pieceID, filter) ? 
+                        ITile.State.Valid : ITile.State.Invalid);
                 }
             }
 
@@ -94,9 +86,8 @@ namespace GridSystem
             {
                 if (GetTileAt(coordinates[i], out var currentTile))
                 {
-                    currentTile.AddColor(IsInFilter(currentTile.pieceID, filter)
-                        ? currentTile.validColor
-                        : currentTile.invalidColor);
+                    currentTile.AddState(IsInFilter(currentTile.pieceID, filter) ? 
+                        ITile.State.Valid : ITile.State.Invalid);
                 }
             }
         }
@@ -109,12 +100,10 @@ namespace GridSystem
             List<Coordinate> coordinates = area.GetCoordinates(origin, Width, Height);
             for (int i = 0; i < coordinates.Count; i++)
             {
-                Color color = Color.white;
                 if (GetTileAt(coordinates[i], out var currentTile))
                 {
-                    color = IsInFilter(currentTile.pieceID, filter) ? currentTile.validColor : currentTile.invalidColor;
-                    if (currentTile.state == ITile.State.Generic) currentTile.SetColor(currentTile.defaultColor);
-                    currentTile.RemoveColor(color);
+                    currentTile.RemoveState(IsInFilter(currentTile.pieceID, filter) ? 
+                        ITile.State.Valid : ITile.State.Invalid);
                 }
             }
         }
@@ -128,7 +117,6 @@ namespace GridSystem
             List<Coordinate> coordinates = area.GetCoordinates(point, Width, Height);
             for (int i = 0; i < coordinates.Count; i++)
             {
-                Color color = Color.white;
                 if (GetTileAt(coordinates[i], out var currentTile) && 
                     IsInFilter(currentTile.pieceID, filter))
                 {
@@ -143,8 +131,7 @@ namespace GridSystem
             for (int i = 0; i < gridSize; i++)
             {
                 ITile tile = GetTileAtIndex(i);
-                tile.state = ITile.State.Generic;
-                tile.SetColor(tile.defaultColor);
+                tile.SetState(ITile.State.Generic);
                 tile.onClick = OnClick;
                 tile.onEnter = OnEnter;
                 tile.onExit = OnExit;

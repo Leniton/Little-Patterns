@@ -10,11 +10,6 @@ namespace GridSystem
 
         public int pieceID { get; }
 
-        public Color defaultColor { get; }
-        public Color selectableColor { get; }
-        public Color validColor { get; }
-        public Color invalidColor { get; }
-
         [Flags]
         public enum State
         {
@@ -25,8 +20,6 @@ namespace GridSystem
         }
 
         public State state { get; set; }
-
-        public List<Color> colors { get; set; }
 
         //callbacks
         public Action<ITile> onClick { get; set; }
@@ -78,52 +71,30 @@ namespace GridSystem
             return returnValue;
         }
 
-        public void SetColor(Color color)
+        public void SetState(State newState)
         {
-            colors.Clear();
-            AddColor(color);
+            state = newState;
+            UpdateStateVisual();
+        }
+        
+        public void AddState(State newState)
+        {
+            state |= newState;
+            UpdateStateVisual();
+        }
+        
+        public void ToggleState(State newState)
+        {
+            state ^= newState;
+            UpdateStateVisual();
+        }
+        
+        public void RemoveState(State newState)
+        {
+            state &= ~newState;
+            UpdateStateVisual();
         }
 
-        public void AddColor(Color color)
-        {
-            Color invertedColor = ColorExtensions.InvertColor(color);
-            invertedColor.a = 0;
-
-            colors.Add(invertedColor);
-            UpdateColor();
-        }
-
-        public void UpdateColor()
-        {
-            Color newColor = Color.white;
-            for (int i = 0; i < colors.Count; i++)
-            {
-                newColor -= colors[i] * (.25f + (1f / (colors.Count + 1f)));
-            }
-
-            ApplyColor(newColor);
-        }
-
-        /// <summary>
-        /// Set color without altering the color list. Use SetColor instead
-        /// </summary>
-        /// <param name="color"></param>
-        public void ApplyColor(Color color);
-
-        public void RemoveColor(Color color)
-        {
-            Color invertedColor = ColorExtensions.InvertColor(color);
-            invertedColor.a = 0;
-
-            for (int i = 0; i < colors.Count; i++)
-            {
-                if (colors[i] == invertedColor)
-                {
-                    colors.RemoveAt(i);
-                    UpdateColor();
-                    break;
-                }
-            }
-        }
+        public void UpdateStateVisual();
     }
 }

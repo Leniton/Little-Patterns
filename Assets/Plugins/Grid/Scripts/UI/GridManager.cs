@@ -56,6 +56,6 @@ namespace GridSystem.UI
 
         public ITile GetTileAtIndex(int index) => tiles[index];
 
-        public int GetTileIndex(ITile tile) => tiles.IndexOf(tile as Tile ?? null);
+        public int GetTileIndex(ITile tile) => tiles.IndexOf(tile as Tile);
     }
 }

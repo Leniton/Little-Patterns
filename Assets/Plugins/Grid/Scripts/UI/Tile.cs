@@ -32,13 +32,6 @@ namespace GridSystem.UI
         [SerializeField] private Color SelectableColor= Color.gray;
         [SerializeField] private Color ValidColor = Color.green;
         [SerializeField] private Color InvalidColor = Color.red;
-        public Color defaultColor => DefaultColor;
-
-        public Color selectableColor => SelectableColor;
-
-        public Color validColor => ValidColor;
-
-        public Color invalidColor => InvalidColor;
         public List<Color> colors { get; set; } = new();
 
         //callbacks
@@ -54,6 +47,64 @@ namespace GridSystem.UI
             img = GetComponent<Image>();
             img.color = DefaultColor;
             raycaster = GetComponentInParent<GraphicRaycaster>();
+        }
+        
+
+        public void UpdateStateVisual()
+        {
+            colors.Clear();
+            if (state != 0 && state != ITile.State.Generic)
+            {
+                if (NumberUtil.ContainsBytes((int)state, (int)ITile.State.Selectable))
+                    AddColor(SelectableColor);
+                if (NumberUtil.ContainsBytes((int)state, (int)ITile.State.Valid))
+                    AddColor(ValidColor);
+                if (NumberUtil.ContainsBytes((int)state, (int)ITile.State.Invalid))
+                    AddColor(InvalidColor);
+            }
+
+            UpdateColor();
+        }
+
+        public void SetColor(Color color)
+        {
+            colors.Clear();
+            AddColor(color);
+        }
+
+        public void AddColor(Color color)
+        {
+            Color invertedColor = ColorExtensions.InvertColor(color);
+            invertedColor.a = 0;
+
+            colors.Add(invertedColor);
+        }
+
+        public void UpdateColor()
+        {
+            Color newColor = Color.white;
+            for (int i = 0; i < colors.Count; i++)
+            {
+                newColor -= colors[i] * (.25f + (1f / (colors.Count + 1f)));
+            }
+
+            ApplyColor(newColor);
+        }
+
+        public void RemoveColor(Color color)
+        {
+            Color invertedColor = ColorExtensions.InvertColor(color);
+            invertedColor.a = 0;
+
+            for (int i = 0; i < colors.Count; i++)
+            {
+                if (colors[i] == invertedColor)
+                {
+                    colors.RemoveAt(i);
+                    UpdateColor();
+                    break;
+                }
+            }
         }
 
         public void ApplyColor(Color color)

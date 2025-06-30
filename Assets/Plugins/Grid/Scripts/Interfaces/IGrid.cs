@@ -56,15 +56,11 @@ namespace GridSystem
         {
             if (!currentlySelecting) return;
 
-            List<Coordinate> coordinates = area.GetCoordinates(origin, Width, Height);
-            for (int i = 0; i < coordinates.Count; i++)
+            GetTiles(origin, area, (currentTile) =>
             {
-                if (GetTileAt(coordinates[i], out var currentTile))
-                {
-                    currentTile.AddState(IsInFilter(currentTile.pieceID, filter) ? 
-                        ITile.State.Valid : ITile.State.Invalid);
-                }
-            }
+                currentTile.AddState(IsInFilter(currentTile.pieceID, filter) ? 
+                    ITile.State.Valid : ITile.State.Invalid);
+            }, filter);
         }
 
         public void UnSelectArea(Coordinate origin, Area area, int filter = -1)
@@ -72,15 +68,11 @@ namespace GridSystem
             //return;
             if (!currentlySelecting) return;
 
-            List<Coordinate> coordinates = area.GetCoordinates(origin, Width, Height);
-            for (int i = 0; i < coordinates.Count; i++)
+            GetTiles(origin, area, (currentTile) =>
             {
-                if (GetTileAt(coordinates[i], out var currentTile))
-                {
-                    currentTile.RemoveState(IsInFilter(currentTile.pieceID, filter) ? 
-                        ITile.State.Valid : ITile.State.Invalid);
-                }
-            }
+                currentTile.RemoveState(IsInFilter(currentTile.pieceID, filter) ? 
+                    ITile.State.Valid : ITile.State.Invalid);
+            }, filter);
         }
 
         public void ClickArea(Action<Coordinate, Coordinate, Area> clickAction, Coordinate origin, Coordinate point,
@@ -88,17 +80,11 @@ namespace GridSystem
         {
             //return;
             if (!currentlySelecting) return;
-
-            List<Coordinate> coordinates = area.GetCoordinates(point, Width, Height);
-            for (int i = 0; i < coordinates.Count; i++)
+            
+            GetTiles(origin, area, (currentTile) =>
             {
-                if (GetTileAt(coordinates[i], out var currentTile) && 
-                    IsInFilter(currentTile.pieceID, filter))
-                {
-                    clickAction?.Invoke(origin, point, area);
-                    return;
-                }
-            }
+                clickAction?.Invoke(origin, point, area);
+            }, filter);
         }
 
         public void StopSelecting()
@@ -129,8 +115,23 @@ namespace GridSystem
             onExit?.Invoke(tile);
         }
 
-        public static bool IsInFilter(int value, int filter) =>
-            filter <= 0 || NumberUtil.ContainsAnyBits(value, filter);
+        public List<Coordinate> GetTiles(Coordinate origin, Area area, Action<ITile> onTile, int filter = -1)
+        {
+            List<Coordinate> coordinates = area.GetCoordinates(origin, Width, Height);
+            GetTiles(coordinates, onTile, filter);
+            return coordinates;
+        }
+
+        public void GetTiles(List<Coordinate> coordinates, Action<ITile> onTile, int filter = -1)
+        {
+            for (int i = 0; i < coordinates.Count; i++)
+            {
+                if (!GetTileAt(coordinates[i], out var currentTile) ||
+                    !IsInFilter(currentTile.pieceID, filter))
+                    continue;
+                onTile?.Invoke(currentTile);
+            }
+        }
 
         public void PickArea(AreaPickData areaPick, Action<AreaPickEvent> onPick)
         {
@@ -150,17 +151,13 @@ namespace GridSystem
                     coordinates.Add(GetTileCoordinates(i));
             }
 
-            for (int i = 0; i < coordinates.Count; i++)
+            GetTiles(coordinates, (tile) =>
             {
-                Coordinate currentCoordinate = coordinates[i];
-                if (!GetTileAt(currentCoordinate, out var tile)) continue;
                 tile.onEnter += OnEnterTile;
                 tile.onExit += OnExitTile;
                 tile.onClick += OnClickTile;
                 tile.AddState(ITile.State.Selectable);
-                /*tile.RemoveState(IsInFilter(tile.pieceID, filter) ?
-                    ITile.State.Valid : ITile.State.Invalid);*/
-            }
+            });
             
             void OnEnterTile(ITile tile)
             {
@@ -176,34 +173,32 @@ namespace GridSystem
 
             void OnClickTile(ITile tile)
             {
+                //invalidate click if it was an invalid tile
+                if(!IsInFilter(tile.pieceID, areaPick.areaFilter)) return;
                 var currentCoordinate = GetTileCoordinates(tile);
+                //Remove selections and listeners
                 UnSelectArea(currentCoordinate, areaPick.pickArea, areaPick.areaFilter);
-                AreaPickEvent evt = new(this, areaPick, currentCoordinate);
-                List<Coordinate> areaCoordinates =
-                    areaPick.pickArea.GetCoordinates(currentCoordinate, Width, Height);
-                for (int j = 0; j < areaCoordinates.Count; j++)
+                GetTiles(coordinates, (areaTile) =>
                 {
-                    if (!GetTileAt(areaCoordinates[j], out var currentTile) ||
-                        !IsInFilter(currentTile.pieceID, areaPick.areaFilter))
-                        continue;
-                    evt.tiles.Add(currentTile);
-                }
-
-                for (int j = 0; j < coordinates.Count; j++)
-                {
-                    if (!GetTileAt(coordinates[j], out var areaTile)) continue;
                     areaTile.RemoveState(ITile.State.Selectable);
                     areaTile.onEnter -= OnEnterTile;
                     areaTile.onExit -= OnExitTile;
                     areaTile.onClick -= OnClickTile;
-                }
-
+                });
+                
+                //create event and populate it
+                AreaPickEvent evt = new(this, areaPick, currentCoordinate);
+                GetTiles(currentCoordinate, areaPick.pickArea, evt.tiles.Add, areaPick.areaFilter);
+                //call event
                 onPick?.Invoke(evt);
             }
             if (hoveredTile == null || !coordinates.Contains(GetTileCoordinates(hoveredTile))) return;
 
             SelectArea(GetTileCoordinates(hoveredTile), areaPick.pickArea, areaPick.areaFilter);
         }
+
+        public static bool IsInFilter(int value, int filter) =>
+            filter <= 0 || NumberUtil.ContainsAnyBits(value, filter);
     }
 
     public struct AreaPickData

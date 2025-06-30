@@ -6,17 +6,37 @@ namespace GridSystem
 {
     public class NumberUtil : MonoBehaviour
     {
-        public static bool ContainsBytes(int value, int comparingValue) => (comparingValue ^ value) == (comparingValue - value);
         public static int Invert(int value, int maxValue) => Mathf.Abs(value - maxValue);
         public static float Invert(float value, float maxValue) => Mathf.Abs(value - maxValue);
-        public static bool ContainsAnyBits(int value, int comparingValue)
+
+        /// <summary>
+        /// Checks if given value contains given bits
+        /// </summary>
+        /// <param name="value">The value being checked</param>
+        /// <param name="bytes">the bytes it must contain</param>
+        /// <returns>true if value contains all bytes, otherwise false</returns>
+        public static bool ContainsBytes(int value, int bytes) => (value ^ bytes) == (value - bytes);
+
+        /// <summary>
+        /// Checks if given value contains any of the given bits
+        /// </summary>
+        /// <param name="value">The value being checked</param>
+        /// <param name="bytes">the bytes it must contain</param>
+        /// <returns>true if value contains any of the bytes, otherwise false</returns>
+        public static bool ContainsAnyBits(int value, int bytes)
         {
-            int[] bits = SeparateBits(value);
+            int[] bits = SeparateBits(bytes);
             for (int i = 0; i < bits.Length; i++)
-                if (ContainsBytes(bits[i], comparingValue))
+                if (ContainsBytes(value, bits[i]))
                     return true;
             return false;
         }
+
+        /// <summary>
+        /// Separate a value into its individual bits
+        /// </summary>
+        /// <param name="value">Value being divided</param>
+        /// <returns>An array with each bit</returns>
         public static int[] SeparateBits(int value)
         {
             List<int> bits = new List<int>();
@@ -27,6 +47,7 @@ namespace GridSystem
                     bits.Add(comparingValue);
                 comparingValue <<= 1;
             }
+
             return bits.ToArray();
         }
     }

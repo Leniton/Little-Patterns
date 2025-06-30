@@ -18,6 +18,14 @@ public class TestScript : MonoBehaviour
     // Update is called once per frame
     void Update()
     {
-        if (Input.GetKeyDown(KeyCode.Space)) grid.ChooseTileInRange(Coordinate.Zero, Area.Point, Area.Point, null);
+        if (Input.GetKeyDown(KeyCode.Space))
+        {
+            grid.PickArea(new()
+            {
+                pickArea = Area.Square(1),
+                originArea = Area.Square(1),
+                originCoordinate = new(2,2),
+            }, null);
+        }
     }
 }

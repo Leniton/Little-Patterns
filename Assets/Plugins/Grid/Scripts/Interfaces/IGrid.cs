@@ -25,9 +25,11 @@ namespace GridSystem
         public int GetTileIndex(ITile tile);
         public ITile GetTileAtIndex(int index);
 
-        public Coordinate GetTileCoordinates(ITile tile)
+        public Coordinate GetTileCoordinates(ITile tile) =>
+            GetTileCoordinates(GetTileIndex(tile));
+        
+        public Coordinate GetTileCoordinates(int id)
         {
-            int id = GetTileIndex(tile);
             int x = id % Width;
             int y = id / Width;
 
@@ -48,33 +50,6 @@ namespace GridSystem
             if (GetTileAt(coordinates, out var currentTile)) currentTile.RemovePiece(piece);
             piece.coordinate = coordinates;
             newTile.PlacePiece(piece);
-        }
-
-        public void ChooseTileInRange(Coordinate origin, Area area, Area selectArea,
-            Action<Coordinate, Coordinate, Area> onSelectTile,
-            int filter = -1, int selectFilter = -1)
-        {
-            currentlySelecting = true;
-
-            List<Coordinate> coordinates = area.GetCoordinates(origin, Width, Height);
-            for (int i = 0; i < coordinates.Count; i++)
-            {
-                Coordinate currentCoordinate = coordinates[i];
-                //Debug.Log($"{currentCoordinate.x} | {currentCoordinate.y}");
-                if (GetTileAt(currentCoordinate, out var tile))
-                {
-                    tile.onEnter += (value) => SelectArea(currentCoordinate, selectArea, selectFilter);
-                    tile.onExit += (value) => UnSelectArea(currentCoordinate, selectArea, selectFilter);
-                    tile.onClick += (value) =>
-                        ClickArea(onSelectTile, origin, currentCoordinate, selectArea, selectFilter);
-                    tile.RemoveState(IsInFilter(tile.pieceID, filter) ? 
-                        ITile.State.Valid : ITile.State.Invalid);
-                }
-            }
-
-            if (hoveredTile == null || !coordinates.Contains(GetTileCoordinates(hoveredTile))) return;
-
-            SelectArea(GetTileCoordinates(hoveredTile), selectArea, selectFilter);
         }
 
         public void SelectArea(Coordinate origin, Area area, int filter = -1)
@@ -156,5 +131,112 @@ namespace GridSystem
 
         public static bool IsInFilter(int value, int filter) =>
             filter <= 0 || NumberUtil.ContainsAnyBits(value, filter);
+
+        public void PickArea(AreaPickData areaPick, Action<AreaPickEvent> onPick)
+        {
+            currentlySelecting = true;
+
+            List<Coordinate> coordinates;
+            if (areaPick.originArea.HasValue)
+            {
+                Area area = areaPick.originArea.Value;
+                Coordinate coordinate = areaPick.originCoordinate ?? Coordinate.Zero;
+                coordinates = area.GetCoordinates(coordinate, Width, Height);
+            }
+            else
+            {
+                coordinates = new();
+                for (int i = 0; i < gridSize; i++)
+                    coordinates.Add(GetTileCoordinates(i));
+            }
+
+            for (int i = 0; i < coordinates.Count; i++)
+            {
+                Coordinate currentCoordinate = coordinates[i];
+                if (!GetTileAt(currentCoordinate, out var tile)) continue;
+                tile.onEnter += OnEnterTile;
+                tile.onExit += OnExitTile;
+                tile.onClick += OnClickTile;
+                tile.AddState(ITile.State.Selectable);
+                /*tile.RemoveState(IsInFilter(tile.pieceID, filter) ?
+                    ITile.State.Valid : ITile.State.Invalid);*/
+            }
+            
+            void OnEnterTile(ITile tile)
+            {
+                var currentCoordinate = GetTileCoordinates(tile);
+                SelectArea(currentCoordinate, areaPick.pickArea, areaPick.areaFilter);
+            }
+
+            void OnExitTile(ITile tile)
+            {
+                var currentCoordinate = GetTileCoordinates(tile);
+                UnSelectArea(currentCoordinate, areaPick.pickArea, areaPick.areaFilter);
+            }
+
+            void OnClickTile(ITile tile)
+            {
+                var currentCoordinate = GetTileCoordinates(tile);
+                UnSelectArea(currentCoordinate, areaPick.pickArea, areaPick.areaFilter);
+                AreaPickEvent evt = new(this, areaPick, currentCoordinate);
+                List<Coordinate> areaCoordinates =
+                    areaPick.pickArea.GetCoordinates(currentCoordinate, Width, Height);
+                for (int j = 0; j < areaCoordinates.Count; j++)
+                {
+                    if (!GetTileAt(areaCoordinates[j], out var currentTile) ||
+                        !IsInFilter(currentTile.pieceID, areaPick.areaFilter))
+                        continue;
+                    evt.tiles.Add(currentTile);
+                }
+
+                for (int j = 0; j < coordinates.Count; j++)
+                {
+                    if (!GetTileAt(coordinates[j], out var areaTile)) continue;
+                    areaTile.RemoveState(ITile.State.Selectable);
+                    areaTile.onEnter -= OnEnterTile;
+                    areaTile.onExit -= OnExitTile;
+                    areaTile.onClick -= OnClickTile;
+                }
+
+                onPick?.Invoke(evt);
+            }
+            if (hoveredTile == null || !coordinates.Contains(GetTileCoordinates(hoveredTile))) return;
+
+            SelectArea(GetTileCoordinates(hoveredTile), areaPick.pickArea, areaPick.areaFilter);
+        }
+    }
+
+    public struct AreaPickData
+    {
+        public Coordinate? originCoordinate;
+        public Area? originArea;
+        public Area pickArea;
+        public int areaFilter;
+
+        public AreaPickData(Area pickArea, int areaFilter = -1)
+        {
+            this.pickArea = pickArea;
+            this.areaFilter = areaFilter;
+            originArea = null;
+            originCoordinate = null;
+        }
+    }
+
+    public struct AreaPickEvent
+    {
+        public AreaPickData pickData;
+        public IGrid grid;
+        
+        public List<ITile> tiles;
+        public Coordinate pickOrigin;
+        public Area area => pickData.pickArea;
+
+        public AreaPickEvent(IGrid currentGrid, AreaPickData data, Coordinate origin)
+        {
+            grid = currentGrid;
+            pickData = data;
+            tiles = new();
+            pickOrigin = origin;
+        }
     }
 }

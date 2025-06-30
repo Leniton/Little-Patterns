@@ -32,7 +32,7 @@ namespace GridSystem.UI
         [SerializeField] private Color SelectableColor= Color.gray;
         [SerializeField] private Color ValidColor = Color.green;
         [SerializeField] private Color InvalidColor = Color.red;
-        public List<Color> colors { get; set; } = new();
+        private List<Color> colors = new();
 
         //callbacks
         public Action<ITile> onClick { get; set; }
@@ -66,13 +66,13 @@ namespace GridSystem.UI
             UpdateColor();
         }
 
-        public void SetColor(Color color)
+        private void SetColor(Color color)
         {
             colors.Clear();
             AddColor(color);
         }
 
-        public void AddColor(Color color)
+        private void AddColor(Color color)
         {
             Color invertedColor = ColorExtensions.InvertColor(color);
             invertedColor.a = 0;
@@ -80,7 +80,7 @@ namespace GridSystem.UI
             colors.Add(invertedColor);
         }
 
-        public void UpdateColor()
+        private void UpdateColor()
         {
             Color newColor = Color.white;
             for (int i = 0; i < colors.Count; i++)
@@ -91,7 +91,7 @@ namespace GridSystem.UI
             ApplyColor(newColor);
         }
 
-        public void RemoveColor(Color color)
+        private void RemoveColor(Color color)
         {
             Color invertedColor = ColorExtensions.InvertColor(color);
             invertedColor.a = 0;
@@ -107,7 +107,7 @@ namespace GridSystem.UI
             }
         }
 
-        public void ApplyColor(Color color)
+        private void ApplyColor(Color color)
         {
             img.color = color;
         }

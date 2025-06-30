@@ -22,7 +22,7 @@ namespace GridSystem
         /// <summary>
         /// The coordinate (0, 0)
         /// </summary>
-        public static Coordinate Zero => new Coordinate();
+        public static readonly Coordinate Zero = new Coordinate();
 
         public override string ToString() => $"coordinate:({x},{y})";
     }

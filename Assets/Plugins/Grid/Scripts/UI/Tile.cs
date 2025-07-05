@@ -153,7 +153,7 @@ namespace GridSystem.UI
         {
             if (pieces.Contains(piece)) return;
             pieces.Add(piece);
-            piece.PositionPiece(transform.localPosition);
+            piece.PositionPiece(transform.localPosition,this);
         }
     }
 }

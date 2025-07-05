@@ -65,7 +65,6 @@ namespace GridSystem
 
         public void UnSelectArea(Coordinate origin, Area area, int filter = -1)
         {
-            //return;
             if (!currentlySelecting) return;
 
             GetTiles(origin, area, (currentTile) =>
@@ -78,7 +77,6 @@ namespace GridSystem
         public void ClickArea(Action<Coordinate, Coordinate, Area> clickAction, Coordinate origin, Coordinate point,
             Area area, int filter = -1)
         {
-            //return;
             if (!currentlySelecting) return;
             
             GetTiles(origin, area, (currentTile) =>

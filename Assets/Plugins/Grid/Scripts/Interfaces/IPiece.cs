@@ -26,7 +26,7 @@ namespace GridSystem
             id = pieceId;
         }
 
-        public void PositionPiece(Vector3 position);
+        public void PositionPiece(Vector3 position, ITile tile);
 
         public bool AddCharacteristic<T>(T characteristic) where T : Characteristic
         {

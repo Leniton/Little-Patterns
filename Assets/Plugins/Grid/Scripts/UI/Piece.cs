@@ -36,7 +36,7 @@ namespace GridSystem.UI
             image.color = color;
         }
 
-        public void PositionPiece(Vector3 position)
+        public void PositionPiece(Vector3 position, ITile tile)
         {
             //place him at new space
             transform.localPosition = position;
